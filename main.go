@@ -73,5 +73,5 @@ func main() {
 		}).Info("request completed")
 	})
 
-	panic(http.ListenAndServe(":8080", nil))
+	panic(http.ListenAndServe(":4269", nil))
 }
