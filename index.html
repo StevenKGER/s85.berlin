@@ -1,0 +1,32 @@
+<html>
+<head>
+    <title>{{.Title}}</title>
+</head>
+<body>
+<style>
+    .text {
+        font-family: Arial,serif;
+    }
+    .center {
+        text-align: center;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 100vh;
+    }
+    h1 {
+        font-size: 6em;
+    }
+</style>
+<h1 class="text center">{{.StatusText}}</h1>
+<br><br>
+<h3 class="text center">{{.DetailText}}</h3>
+<br><br><br><br><br>
+<div class="text center">
+    Last Update: {{.Time}}<br>
+    Made with ❤️ as <a href="https://github.com/StevenKGER/s85.berlin">Open Source Software</a> with data from <a href="https://transport.rest/">transport.rest</a>
+</div>
+</body>
+</html>
