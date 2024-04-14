@@ -1,0 +1,11 @@
+{
+  "title": "Is the S85 in operation?",
+  "no_information_status": "S85 maybe runs, maybe not.",
+  "no_information_detail": "Something didn't work while fetching data. Please try again in one minute.",
+  "closing_time_status": "S85 is not planned to be in operation right now.",
+  "closing_time_detail": "Closing time! Come back tomorrow.",
+  "running_status": "S85 runs.",
+  "running_detail": "Congratulations! Have a great journey.",
+  "not_running_status": "S85 does not run.",
+  "not_running_detail": "Oh dear."
+}
