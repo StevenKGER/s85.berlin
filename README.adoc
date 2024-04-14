@@ -12,7 +12,7 @@ The station data of https://en.wikipedia.org/wiki/Baumschulenweg_station[Baumsch
 
 === ToDo
 
-* [ ] multi-language support
+* [x] multi-language support (PRs with other languages still welcome!)
 * [ ] save requested data to a database
 * [ ] dashboard to see availability of S85 over time
 * [ ] add buttons to share status on Social Media (e.g. X)
