@@ -26,7 +26,8 @@ var (
 		Time:           time.Now(),
 		StatusMessages: []string{},
 	}
-	indexTemplate = template.Must(template.New("index.html").Funcs(template.FuncMap{"t": i18n.Tr}).ParseFiles("index.html"))
+	indexFS       embed.FS
+	indexTemplate = template.Must(template.New("index.html").Funcs(template.FuncMap{"t": i18n.Tr}).ParseFS(indexFS))
 
 	//go:embed i18n/*
 	i18nFS    embed.FS
