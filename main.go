@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"github.com/StevenKGER/s85.berlin/internal"
+	"github.com/kataras/i18n"
 	"github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
@@ -12,7 +14,7 @@ import (
 
 type TemplateDetails struct {
 	Title      string
-	StatusText string
+	Status     internal.DepartureStatus
 	DetailText template.HTML
 	Time       string
 }
@@ -24,10 +26,23 @@ var (
 		Time:           time.Now(),
 		StatusMessages: []string{},
 	}
-	indexTemplate = template.Must(template.ParseFiles("index.html"))
+	indexTemplate = template.Must(template.New("index.html").Funcs(template.FuncMap{"t": i18n.Tr}).ParseFiles("index.html"))
+
+	//go:embed i18n/*
+	i18nFS    embed.FS
+	translate *i18n.I18n
 )
 
 func main() {
+	loader, err := i18n.FS(i18nFS, "./i18n/*.json")
+	if err != nil {
+		internal.Log.Fatalln("Error while loading i18n:", err)
+	}
+	translate, err = i18n.New(loader, "en", "de")
+	if err != nil {
+		internal.Log.Fatalln("Error while loading i18n:", err)
+	}
+
 	go func() {
 		for {
 			lock.Lock()
@@ -38,29 +53,24 @@ func main() {
 	}()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		translateFunc := translate.GetLocale(r).GetMessage
+
 		lock.RLock()
-		var status, detail string
-		if information.Status == internal.NO_INFORMATION {
-			status = "Die S85 fährt vielleicht, vielleicht aber auch nicht."
-			detail = "Etwas hat beim Abruf der Daten nicht funktioniert. Versuche es in einer Minute erneut."
-		} else if information.Status == internal.CLOSING_TIME {
-			status = "Die S85 schläft gerade."
-			detail = "Betriebsschluss! Komm morgen wieder."
-		} else if information.Status == internal.RUNNING {
-			status = "Die S85 fährt."
-			detail = "Glückwunsch und gute Fahrt!"
-		} else if information.Status == internal.NOT_RUNNING {
-			status = "Die S85 fährt nicht."
-			detail = strings.Join(information.StatusMessages, "<br>") + "<br><br>Ohje."
+		var detail string
+		if information.Status == internal.NOT_RUNNING {
+			detail = strings.Join(information.StatusMessages, "<br>")
 		}
 		data := TemplateDetails{
 			Title:      "Fährt die S85?",
-			StatusText: status,
+			Status:     information.Status,
 			DetailText: template.HTML(detail),
 			Time:       information.Time.Format("2006-01-02 15:04:05"),
 		}
+		indexTemplate.Funcs(template.FuncMap{
+			"t": translateFunc,
+		})
+		err = indexTemplate.Execute(w, data)
 		lock.RUnlock()
-		err := indexTemplate.Execute(w, data)
 		if err != nil {
 			internal.Log.Errorln("Error while writing a response using the index template", err)
 		}

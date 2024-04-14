@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>{{.Title}}</title>
+    <title>{{t "title"}}</title>
 </head>
 <body>
 <style>
@@ -20,9 +20,26 @@
         font-size: 6em;
     }
 </style>
-<h1 class="text center">{{.StatusText}}</h1>
+{{if eq .Status 0}} <!-- running -->
+<h1 class="text center">{{t "running_status"}}</h1>
 <br><br>
-<h3 class="text center">{{.DetailText}}</h3>
+<h3 class="text center">{{t "running_detail"}}</h3>
+{{end}}
+{{if eq .Status 1}} <!-- not running -->
+<h1 class="text center">{{t "not_running_status"}}</h1>
+<br><br>
+<h3 class="text center">{{.DetailText}}<br><br>{{t "not_running_detail"}}</h3>
+{{end}}
+{{if eq .Status 2}} <!-- closing time -->
+<h1 class="text center">{{t "closing_time_status"}}</h1>
+<br><br>
+<h3 class="text center">{{t "closing_time_detail"}}</h3>
+{{end}}
+{{if eq .Status 3}} <!-- no information -->
+<h1 class="text center">{{t "no_information_status"}}</h1>
+<br><br>
+<h3 class="text center">{{t "no_information_detail"}}</h3>
+{{end}}
 <br><br><br><br><br>
 <div class="text center">
     Last Update: {{.Time}}<br>
