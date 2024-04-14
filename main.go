@@ -13,7 +13,7 @@ import (
 type TemplateDetails struct {
 	Title      string
 	StatusText string
-	DetailText string
+	DetailText template.HTML
 	Time       string
 }
 
@@ -51,12 +51,12 @@ func main() {
 			detail = "Glückwunsch und gute Fahrt!"
 		} else if information.Status == internal.NOT_RUNNING {
 			status = "Die S85 fährt nicht."
-			detail = "Ohje.<br>" + strings.Join(information.StatusMessages, "<br>")
+			detail = strings.Join(information.StatusMessages, "<br>") + "<br><br>Ohje."
 		}
 		data := TemplateDetails{
 			Title:      "Fährt die S85?",
 			StatusText: status,
-			DetailText: detail,
+			DetailText: template.HTML(detail),
 			Time:       information.Time.Format("2006-01-02 15:04:05"),
 		}
 		lock.RUnlock()

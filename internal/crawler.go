@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"github.com/Jeffail/gabs/v2"
+	"html/template"
 	"io"
 	"net/http"
 	"os"
@@ -37,7 +38,7 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 				if slices.Contains(result.StatusMessages, text) {
 					continue
 				}
-				result.StatusMessages = append(result.StatusMessages, text)
+				result.StatusMessages = append(result.StatusMessages, template.HTMLEscapeString(text))
 			}
 		}
 	}
