@@ -7,8 +7,15 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"slices"
 	"time"
+)
+
+var (
+	fullHtmlTagRegex    = regexp.MustCompile(`(<[a-zA-Z]+[^<]*>(?:[^<]*)</[a-zA-Z]+[^<]*>)`)
+	compactHtmlTagRegex = regexp.MustCompile(`(<[a-zA-Z]+[^<]*/?>)(?:[^<]*)`)
+	patternList         = []*regexp.Regexp{fullHtmlTagRegex, compactHtmlTagRegex}
 )
 
 func CrawlInformationAboutDeparture() *DepartureInformation {
@@ -35,10 +42,12 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 
 			if remark.S("type").Data().(string) == "warning" {
 				text := remark.S("text").Data().(string)
-				if slices.Contains(result.StatusMessages, text) {
+				sanitizedText := removeHTMLTags(text)
+				if slices.Contains(result.StatusMessages, sanitizedText) {
 					continue
 				}
-				result.StatusMessages = append(result.StatusMessages, template.HTMLEscapeString(text))
+				// we still escape the string, just in case
+				result.StatusMessages = append(result.StatusMessages, template.HTMLEscapeString(sanitizedText))
 			}
 		}
 	}
@@ -99,4 +108,20 @@ func writeDebugToFile(information *DepartureInformation, json gabs.Container) er
 	}
 
 	return nil
+}
+
+// removeHTMLTags is used to remove full HTML tags (including the contents they enclose)
+// sometimes the S-Bahn adds a link to their Homepage in the status message we don't want to display
+func removeHTMLTags(text string) string {
+	for _, regex := range patternList {
+		removedChars := 0
+		indexes := regex.FindAllStringSubmatchIndex(text, -1)
+		for _, index := range indexes {
+			start, end := index[2], index[3]
+			text = text[:start-removedChars] + text[end-removedChars:]
+			removedChars += end - start
+		}
+	}
+
+	return text
 }
