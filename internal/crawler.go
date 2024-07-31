@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"github.com/Jeffail/gabs/v2"
 	"html/template"
 	"io"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"regexp"
 	"slices"
 	"time"
+
+	"github.com/Jeffail/gabs/v2"
 )
 
 var (
@@ -27,17 +28,20 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 	}
 
 	Log.Infoln("looking for S85 departure information...")
+	var s85Departures float32
+	var runningS85Departures float32
 	for _, departure := range json.S("departures").Children() {
 		if departure.S("line").S("name").Data().(string) != "S85" {
 			continue
 		}
-		result.Status = RUNNING
+		s85Departures += 1
 
 		remarks := departure.S("remarks")
 		for _, remark := range remarks.Children() {
 			if remark.S("type").Data().(string) == "status" && (remark.S("code").Data().(string) == "text.realtime.journey.cancelled" ||
 				remark.S("code").Data().(string) == "text.realtime.stop.cancelled") {
 				result.Status = NOT_RUNNING
+				continue
 			}
 
 			if remark.S("type").Data().(string) == "warning" {
@@ -50,6 +54,12 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 				result.StatusMessages = append(result.StatusMessages, template.HTMLEscapeString(sanitizedText))
 			}
 		}
+
+		runningS85Departures += 1
+	}
+
+	if runningS85Departures/s85Departures > 0.5 {
+		result.Status = RUNNING
 	}
 
 	if result.Status == NO_INFORMATION {
