@@ -6,6 +6,7 @@
   "closing_time_detail": "Closing time! Come back tomorrow.",
   "running_status": "S85 runs.",
   "running_detail": "Congratulations! Have a great journey.",
+  "running_status_with_detail_message": "S85 runs, however...",
   "not_running_status": "S85 does not run.",
   "not_running_detail": "Oh dear."
 }

@@ -6,6 +6,7 @@
   "closing_time_detail": "Betriebsschluss! Komm morgen wieder.",
   "running_status": "Die S85 fährt.",
   "running_detail": "Glückwunsch und gute Fahrt!",
+  "running_status_with_detail_message": "Die S85 fährt, aber...",
   "not_running_status": "Die S85 fährt nicht.",
   "not_running_detail": "Ohje."
 }

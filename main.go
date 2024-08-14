@@ -2,18 +2,18 @@ package main
 
 import (
 	"embed"
-	"github.com/StevenKGER/s85.berlin/internal"
-	"github.com/kataras/i18n"
-	"github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/StevenKGER/s85.berlin/internal"
+	"github.com/kataras/i18n"
+	"github.com/sirupsen/logrus"
 )
 
 type TemplateDetails struct {
-	Title      string
 	Status     internal.DepartureStatus
 	DetailText template.HTML
 	Time       string
@@ -63,7 +63,6 @@ func main() {
 			detail = strings.Join(information.StatusMessages, "<br>")
 		}
 		data := TemplateDetails{
-			Title:      "Fährt die S85?",
 			Status:     information.Status,
 			DetailText: template.HTML(detail),
 			Time:       information.Time.Format("2006-01-02 15:04:05"),
