@@ -35,12 +35,14 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 			continue
 		}
 		s85Departures += 1
+		isDepatureRunning := true
 
 		remarks := departure.S("remarks")
 		for _, remark := range remarks.Children() {
 			if remark.S("type").Data().(string) == "status" && (remark.S("code").Data().(string) == "text.realtime.journey.cancelled" ||
 				remark.S("code").Data().(string) == "text.realtime.stop.cancelled") {
 				result.Status = NOT_RUNNING
+				isDepatureRunning = false
 				continue
 			}
 
@@ -55,7 +57,9 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 			}
 		}
 
-		runningS85Departures += 1
+		if isDepatureRunning {
+			runningS85Departures += 1
+		}
 	}
 
 	if runningS85Departures/s85Departures > 0.5 {
