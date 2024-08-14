@@ -58,10 +58,7 @@ func main() {
 		translateFunc := translate.GetLocale(r).GetMessage
 
 		lock.RLock()
-		var detail string
-		if information.Status == internal.NOT_RUNNING {
-			detail = strings.Join(information.StatusMessages, "<br>")
-		}
+		detail := strings.Join(information.StatusMessages, "<br>")
 		data := TemplateDetails{
 			Status:     information.Status,
 			DetailText: template.HTML(detail),
