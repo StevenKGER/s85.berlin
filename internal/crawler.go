@@ -20,7 +20,7 @@ var (
 )
 
 func CrawlInformationAboutDeparture() *DepartureInformation {
-	result := &DepartureInformation{Status: NO_INFORMATION, Time: time.Now(), StatusMessages: []string{}}
+	result := &DepartureInformation{Status: NO_INFORMATION, Time: time.Now(), StatusMessages: map[string][]string{}}
 	json, err := getRawDepartureInformation()
 	if err != nil {
 		Log.Error("parsing raw departure JSON failed", err)
@@ -49,11 +49,20 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 			if remark.S("type").Data().(string) == "warning" {
 				text := remark.S("text").Data().(string)
 				sanitizedText := removeHTMLTags(text)
-				if slices.Contains(result.StatusMessages, sanitizedText) {
+				germanStatusMessages := result.StatusMessages["de"]
+				if slices.Contains(germanStatusMessages, sanitizedText) {
 					continue
 				}
 				// we still escape the string, just in case
-				result.StatusMessages = append(result.StatusMessages, template.HTMLEscapeString(sanitizedText))
+				sanitizedText = template.HTMLEscapeString(sanitizedText)
+				result.StatusMessages["de"] = append(germanStatusMessages, sanitizedText)
+				englishStatusMessages := result.StatusMessages["en"]
+				englishText, err := translate(sanitizedText, "de", "en")
+				if err != nil {
+					Log.Errorln("An error occurred while translating text:", err)
+				} else {
+					result.StatusMessages["en"] = append(englishStatusMessages, englishText)
+				}
 			}
 		}
 

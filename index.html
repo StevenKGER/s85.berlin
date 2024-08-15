@@ -24,7 +24,11 @@
     {{if .DetailText}}
         <h1 class="text center">{{t "running_status_with_detail_message"}}</h1>
         <br><br>
-        <h3 class="text center">{{.DetailText}}<br><br>{{t "running_detail_with_detail_message"}}</h3>
+        <h3 class="text center">{{.DetailText}}</h3>
+        {{if .OriginalDetailText}}
+            <h5 class="text center">({{.OriginalDetailText}})</h5>
+        {{end}}    
+        <h3 class="text center">{{t "running_detail_with_detail_message"}}</h3>
     {{else}}
         <h1 class="text center">{{t "running_status"}}</h1>
         <br><br>
@@ -34,7 +38,11 @@
 {{if eq .Status 1}} <!-- not running -->
     <h1 class="text center">{{t "not_running_status"}}</h1>
     <br><br>
-    <h3 class="text center">{{.DetailText}}<br><br>{{t "not_running_detail"}}</h3>
+    <h3 class="text center">{{.DetailText}}</h3>
+    {{if .OriginalDetailText}}
+        <h5 class="text center">({{.OriginalDetailText}})</h5>
+    {{end}}        
+    <h3 class="text center">{{t "not_running_detail"}}</h3>
 {{end}}
 {{if eq .Status 2}} <!-- closing time -->
     <h1 class="text center">{{t "closing_time_status"}}</h1>

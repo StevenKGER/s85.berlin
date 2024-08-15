@@ -14,5 +14,5 @@ const (
 type DepartureInformation struct {
 	Status         DepartureStatus
 	Time           time.Time
-	StatusMessages []string
+	StatusMessages map[string][]string
 }

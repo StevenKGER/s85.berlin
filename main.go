@@ -14,9 +14,10 @@ import (
 )
 
 type TemplateDetails struct {
-	Status     internal.DepartureStatus
-	DetailText template.HTML
-	Time       string
+	Status             internal.DepartureStatus
+	DetailText         template.HTML
+	OriginalDetailText template.HTML
+	Time               string
 }
 
 var (
@@ -24,7 +25,7 @@ var (
 	information = &internal.DepartureInformation{
 		Status:         internal.NO_INFORMATION,
 		Time:           time.Now(),
-		StatusMessages: []string{},
+		StatusMessages: map[string][]string{},
 	}
 	//go:embed index.html
 	indexFS       embed.FS
@@ -55,17 +56,23 @@ func main() {
 	}()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		translateFunc := translate.GetLocale(r).GetMessage
+		locale := translate.GetLocale(r)
+		language := locale.Tag().String()
+		var originalDetail string
 
 		lock.RLock()
-		detail := strings.Join(information.StatusMessages, "<br>")
+		detail := strings.Join(information.StatusMessages[language], "<br>")
+		if language != "de" {
+			originalDetail = strings.Join(information.StatusMessages["de"], "<br>")
+		}
 		data := TemplateDetails{
-			Status:     information.Status,
-			DetailText: template.HTML(detail),
-			Time:       information.Time.Format("2006-01-02 15:04:05"),
+			Status:             information.Status,
+			DetailText:         template.HTML(detail),
+			OriginalDetailText: template.HTML(originalDetail),
+			Time:               information.Time.Format("2006-01-02 15:04:05"),
 		}
 		indexTemplate.Funcs(template.FuncMap{
-			"t": translateFunc,
+			"t": locale.GetMessage,
 		})
 		err = indexTemplate.Execute(w, data)
 		lock.RUnlock()
