@@ -93,7 +93,7 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 
 func getRawDepartureInformation() (*gabs.Container, error) {
 	Log.Infoln("sending request to VBB API")
-	resp, err := http.Get("https://v6.vbb.transport.rest/stops/900191001/departures" +
+	resp, err := httpClient.Get("https://v6.vbb.transport.rest/stops/900191001/departures" +
 		"?subway=false&tram=false&bus=false&ferry=false&regional=false&express=false&duration=30")
 	if err != nil {
 		Log.Errorf("Error getting raw departure information: %v", err)
