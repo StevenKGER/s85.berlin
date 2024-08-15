@@ -64,6 +64,10 @@ func main() {
 		detail := strings.Join(information.StatusMessages[language], "<br>")
 		if language != "de" {
 			originalDetail = strings.Join(information.StatusMessages["de"], "<br>")
+			if len(detail) == 0 && len(originalDetail) > 0 { // maybe the translation didn't work, so we fallback
+				detail = originalDetail
+				originalDetail = ""
+			}
 		}
 		data := TemplateDetails{
 			Status:             information.Status,
