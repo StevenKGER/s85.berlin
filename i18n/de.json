@@ -7,6 +7,7 @@
   "running_status": "Die S85 fährt.",
   "running_detail": "Glückwunsch und gute Fahrt!",
   "running_status_with_detail_message": "Die S85 fährt, aber...",
+  "running_detail_with_detail_message": "Naja.",
   "not_running_status": "Die S85 fährt nicht.",
   "not_running_detail": "Ohje."
 }
