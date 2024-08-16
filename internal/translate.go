@@ -33,7 +33,7 @@ func translate(text string, sourceLanguage string, targetLanguage string) (strin
 		return "", errors.New("language is not available")
 	}
 
-	encodedText := url.QueryEscape(text)
+	encodedText := url.PathEscape(text)
 	resp, err := httpClient.Get(fmt.Sprintf("https://lingva.ml/api/v1/%s/%s/%s", sourceLanguage, targetLanguage, encodedText))
 	if err != nil {
 		return "", err
