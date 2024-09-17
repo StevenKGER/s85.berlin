@@ -23,6 +23,7 @@ type Language struct {
 }
 
 func translate(text string, sourceLanguage string, targetLanguage string) (string, error) {
+	Log.Infof("translating text '%s' from %s to %s", text, sourceLanguage, targetLanguage)
 	if len(languages) == 0 {
 		if err := fetchAvailableLanguages(); err != nil {
 			return "", err
@@ -53,6 +54,7 @@ func translate(text string, sourceLanguage string, targetLanguage string) (strin
 }
 
 func fetchAvailableLanguages() error {
+	Log.Infoln("fetching available languages")
 	resp, err := httpClient.Get("https://lingva.ml/api/v1/languages")
 	if err != nil {
 		return err
