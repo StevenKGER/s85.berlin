@@ -2,9 +2,11 @@ package internal
 
 import (
 	"fmt"
+	"html"
 	"html/template"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"slices"
@@ -35,39 +37,37 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 			continue
 		}
 		s85Departures += 1
-		isDepatureRunning := true
 
-		remarks := departure.S("remarks")
-		for _, remark := range remarks.Children() {
-			if remark.S("type").Data().(string) == "status" && (remark.S("code").Data().(string) == "text.realtime.journey.cancelled" ||
-				remark.S("code").Data().(string) == "text.realtime.stop.cancelled") {
-				result.Status = NOT_RUNNING
-				isDepatureRunning = false
-				continue
-			}
+		isDepatureRunning, germanStatusMessages := processRemarks(departure)
+		if isDepatureRunning {
+			runningS85Departures += 1
+		} else {
+			result.Status = NOT_RUNNING
+		}
 
-			if remark.S("type").Data().(string) == "warning" {
-				text := remark.S("text").Data().(string)
-				sanitizedText := removeHTMLTags(text)
-				germanStatusMessages := result.StatusMessages["de"]
-				if slices.Contains(germanStatusMessages, sanitizedText) {
-					continue
-				}
-				// we still escape the string, just in case
-				sanitizedText = template.HTMLEscapeString(sanitizedText)
-				result.StatusMessages["de"] = append(germanStatusMessages, sanitizedText)
-				englishStatusMessages := result.StatusMessages["en"]
-				englishText, err := translate(sanitizedText, "de", "en")
-				if err != nil {
-					Log.Errorln("An error occurred while translating text:", err)
-				} else {
-					result.StatusMessages["en"] = append(englishStatusMessages, englishText)
-				}
+		if len(germanStatusMessages) == 0 {
+			continue
+		}
+		for _, message := range germanStatusMessages {
+			if !slices.Contains(result.StatusMessages["de"], message) {
+				result.StatusMessages["de"] = append(result.StatusMessages["de"], message)
 			}
 		}
 
-		if isDepatureRunning {
-			runningS85Departures += 1
+		tripId := departure.S("tripId").Data().(string)
+		englishDepatureInformation, err := getRawTripInformation(tripId, "en")
+		if err != nil {
+			englishStatusMessages := getAutomaticEnglishTranslation(germanStatusMessages)
+			addEnglishStatusMessages(result, englishStatusMessages)
+			continue
+		}
+
+		_, englishStatusMessages := processRemarks(englishDepatureInformation)
+		if slices.Compare(germanStatusMessages, englishStatusMessages) != 0 {
+			addEnglishStatusMessages(result, englishStatusMessages)
+		} else { // content of the slices is the same - probably both German
+			englishStatusMessages := getAutomaticEnglishTranslation(germanStatusMessages)
+			addEnglishStatusMessages(result, englishStatusMessages)
 		}
 	}
 
@@ -91,10 +91,59 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 	return result
 }
 
+func addEnglishStatusMessages(result *DepartureInformation, englishStatusMessages []string) {
+	for _, message := range englishStatusMessages {
+		if !slices.Contains(result.StatusMessages["en"], message) {
+			result.StatusMessages["en"] = append(result.StatusMessages["en"], message)
+		}
+	}
+}
+
+func getAutomaticEnglishTranslation(germanStatusMessages []string) (englishStatusMessages []string) {
+	for _, message := range germanStatusMessages {
+		englishText, err := translate(message, "de", "en")
+		if err != nil {
+			Log.Errorln("An error occurred while translating text:", err)
+		} else {
+			englishStatusMessages = append(englishStatusMessages, englishText)
+		}
+	}
+	return englishStatusMessages
+}
+
+func processRemarks(departure *gabs.Container) (isDepatureRunning bool, statusMessages []string) {
+	isDepatureRunning = true
+	remarks := departure.S("remarks")
+	for _, remark := range remarks.Children() {
+		if remark.S("type").Data().(string) == "status" && (remark.S("code").Data().(string) == "text.realtime.journey.cancelled" ||
+			remark.S("code").Data().(string) == "text.realtime.stop.cancelled") {
+			isDepatureRunning = false
+			continue
+		}
+
+		if remark.S("type").Data().(string) == "warning" {
+			text := remark.S("text").Data().(string)
+			sanitizedText := removeHTMLTags(text)
+			if slices.Contains(statusMessages, sanitizedText) {
+				continue
+			}
+
+			// convert < and >
+			sanitizedText = html.UnescapeString(sanitizedText)
+			// we still escape the string, just in case
+			sanitizedText = template.HTMLEscapeString(sanitizedText)
+			statusMessages = append(statusMessages, sanitizedText)
+		}
+	}
+
+	return isDepatureRunning, statusMessages
+}
+
 func getRawDepartureInformation() (*gabs.Container, error) {
-	Log.Infoln("sending request to VBB API")
+	Log.Infoln("sending station depature request to VBB API")
 	resp, err := httpClient.Get("https://v6.vbb.transport.rest/stops/900191001/departures" +
-		"?subway=false&tram=false&bus=false&ferry=false&regional=false&express=false&duration=30")
+		"?subway=false&tram=false&bus=false&ferry=false&regional=false&express=false" +
+		"&duration=30&language=de")
 	if err != nil {
 		Log.Errorf("Error getting raw departure information: %v", err)
 		return nil, err
@@ -113,6 +162,39 @@ func getRawDepartureInformation() (*gabs.Container, error) {
 	}
 
 	return gabs.ParseJSONBuffer(resp.Body)
+}
+
+func getRawTripInformation(tripId string, language string) (*gabs.Container, error) {
+	Log.Infof("sending detail request to VBB API for trip %s\n", tripId)
+	resp, err := httpClient.Get(
+		fmt.Sprintf(
+			"https://v6.vbb.transport.rest/trips/%s?stopovers=false&remarks=true&polyline=false&language=%s",
+			url.PathEscape(tripId), language,
+		),
+	)
+	if err != nil {
+		Log.Errorf("Error getting raw trip information: %v", err)
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		Log.Error("Error getting raw trip information", resp.Status)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			Log.Error("Error getting raw trip information", err)
+			return nil, err
+		}
+		Log.Error("Error getting raw trip information", string(body))
+	}
+
+	container, err := gabs.ParseJSONBuffer(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return container.S("trip"), nil
 }
 
 func writeDebugToFile(information *DepartureInformation, json gabs.Container) error {
