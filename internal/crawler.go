@@ -10,12 +10,14 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/Jeffail/gabs/v2"
 )
 
 var (
+	stationRangeRegex   = regexp.MustCompile(`\D\.\s*(\(.*\))$`)
 	fullHtmlTagRegex    = regexp.MustCompile(`(<[a-zA-Z]+[^<]*>(?:[^<]*)</[a-zA-Z]+[^<]*>)`)
 	compactHtmlTagRegex = regexp.MustCompile(`(<[a-zA-Z]+[^<]*/?>)(?:[^<]*)`)
 	patternList         = []*regexp.Regexp{fullHtmlTagRegex, compactHtmlTagRegex}
@@ -136,11 +138,7 @@ func processRemarks(departure *gabs.Container) (isDepatureRunning bool, statusMe
 
 		if remark.S("type").Data().(string) == "warning" {
 			text := remark.S("text").Data().(string)
-			sanitizedText := removeHTMLTags(text)
-			// convert < and >
-			sanitizedText = html.UnescapeString(sanitizedText)
-			// we still escape the string, just in case
-			sanitizedText = template.HTMLEscapeString(sanitizedText)
+			sanitizedText := sanitizeStatusMessage(text)
 			if slices.Contains(statusMessages, sanitizedText) {
 				continue
 			}
@@ -149,6 +147,22 @@ func processRemarks(departure *gabs.Container) (isDepatureRunning bool, statusMe
 	}
 
 	return isDepatureRunning, statusMessages
+}
+
+func sanitizeStatusMessage(text string) string {
+	sanitizedText := removeHTMLTags(text)
+	// convert < and >
+	sanitizedText = html.UnescapeString(sanitizedText)
+	// we still keep escaping the string, just in case
+	sanitizedText = template.HTMLEscapeString(sanitizedText)
+	sanitizedText = strings.ReplaceAll(sanitizedText, "\n", "")
+	stationRangeMatch := stationRangeRegex.FindStringSubmatchIndex(sanitizedText)
+	// [start of full match, end of full match, start of group match, end of group match]
+	if len(stationRangeMatch) == 4 {
+		sanitizedText = sanitizedText[:stationRangeMatch[2]]
+	}
+	sanitizedText = strings.TrimSpace(sanitizedText)
+	return sanitizedText
 }
 
 func getRawDepartureInformation() (*gabs.Container, error) {
