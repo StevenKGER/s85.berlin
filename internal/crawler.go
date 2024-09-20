@@ -191,7 +191,7 @@ func getRawDepartureInformation() (*gabs.Container, error) {
 }
 
 func getRawTripInformation(tripId string, language string) (*gabs.Container, error) {
-	Log.Infof("sending detail request to VBB API for trip %s\n", tripId)
+	Log.Infof("sending detail request to VBB API for trip %s", tripId)
 	resp, err := httpClient.Get(
 		fmt.Sprintf(
 			"https://v6.vbb.transport.rest/trips/%s?stopovers=false&remarks=true&polyline=false&language=%s",
