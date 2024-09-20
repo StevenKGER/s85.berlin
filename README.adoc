@@ -1,8 +1,8 @@
 = S85.berlin
 
-Monday, 7pm. The weather is bad, your day wasn't really great and you just want to get home. So you quickly go to https://en.wikipedia.org/wiki/Berlin_Ostkreuz_station[Ostkreuz station] just to see
+Monday, 7pm. The weather is bad, your day wasn't really great and you just want to get home. So you quickly go to https://en.wikipedia.org/wiki/Berlin_Treptower_Park_station[Treptower Park station] just to see this?
 
-*"S85     Zug fällt aus"*?
+image::.github/not_running.jpg["Information display showing disruption of line S85"]
 
 Well, this happens a lot. (Sometimes due to understandable reasons and sometimes because... yes?) +
 That's why https://s85.berlin[s85.berlin] exists.
@@ -18,3 +18,4 @@ The station data of https://en.wikipedia.org/wiki/Baumschulenweg_station[Baumsch
 * [ ] add buttons to share status on Social Media (e.g. X)
 * [ ] more responsive web-"design"
 * [ ] create a bot to automatically update status updates on X/Mastodon/...
+* [ ] check multiple stations during construction work (e.g. when S85 is not running via Baumschulenweg)
