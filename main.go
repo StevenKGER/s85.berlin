@@ -61,9 +61,9 @@ func main() {
 		var originalDetail string
 
 		lock.RLock()
-		detail := strings.Join(information.StatusMessages[language], "<br>")
+		detail := strings.Join(information.StatusMessages[language], "<br><br>")
 		if language != "de" {
-			originalDetail = strings.Join(information.StatusMessages["de"], "<br>")
+			originalDetail = strings.Join(information.StatusMessages["de"], "<br><br>")
 			if len(detail) == 0 && len(originalDetail) > 0 { // maybe the translation didn't work, so we fallback
 				detail = originalDetail
 				originalDetail = ""
