@@ -55,20 +55,7 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 		}
 
 		tripId := departure.S("tripId").Data().(string)
-		englishDepatureInformation, err := getRawTripInformation(tripId, "en")
-		if err != nil {
-			englishStatusMessages := getAutomaticEnglishTranslation(germanStatusMessages)
-			addEnglishStatusMessages(result, englishStatusMessages)
-			continue
-		}
-
-		_, englishStatusMessages := processRemarks(englishDepatureInformation)
-		if slices.Compare(germanStatusMessages, englishStatusMessages) != 0 {
-			addEnglishStatusMessages(result, englishStatusMessages)
-		} else { // content of the slices is the same - probably both German
-			englishStatusMessages := getAutomaticEnglishTranslation(germanStatusMessages)
-			addEnglishStatusMessages(result, englishStatusMessages)
-		}
+		fetchEnglishStatusMessages(tripId, germanStatusMessages, result)
 	}
 
 	if runningS85Departures/s85Departures > 0.5 {
@@ -91,7 +78,33 @@ func CrawlInformationAboutDeparture() *DepartureInformation {
 	return result
 }
 
-func addEnglishStatusMessages(result *DepartureInformation, englishStatusMessages []string) {
+func fetchEnglishStatusMessages(tripId string, germanStatusMessages []string, result *DepartureInformation) {
+	englishDepatureInformation, err := getRawTripInformation(tripId, "en")
+	if err != nil {
+		englishStatusMessages := getAutomaticEnglishTranslation(germanStatusMessages)
+		appendEnglishStatusMessages(result, englishStatusMessages)
+		return
+	}
+
+	_, fetchedEnglishStatusMessages := processRemarks(englishDepatureInformation)
+	var messagesToTranslate []string
+	var englishStatusMessages []string
+	for _, message := range fetchedEnglishStatusMessages {
+		if slices.Contains(germanStatusMessages, message) { // S-Bahn didn't provide an English translation for this message
+			messagesToTranslate = append(messagesToTranslate, message)
+		} else {
+			englishStatusMessages = append(englishStatusMessages, message)
+		}
+	}
+	if len(messagesToTranslate) == 0 {
+		appendEnglishStatusMessages(result, fetchedEnglishStatusMessages)
+	} else {
+		englishStatusMessages := append(englishStatusMessages, getAutomaticEnglishTranslation(messagesToTranslate)...)
+		appendEnglishStatusMessages(result, englishStatusMessages)
+	}
+}
+
+func appendEnglishStatusMessages(result *DepartureInformation, englishStatusMessages []string) {
 	for _, message := range englishStatusMessages {
 		if !slices.Contains(result.StatusMessages["en"], message) {
 			result.StatusMessages["en"] = append(result.StatusMessages["en"], message)
@@ -124,14 +137,13 @@ func processRemarks(departure *gabs.Container) (isDepatureRunning bool, statusMe
 		if remark.S("type").Data().(string) == "warning" {
 			text := remark.S("text").Data().(string)
 			sanitizedText := removeHTMLTags(text)
-			if slices.Contains(statusMessages, sanitizedText) {
-				continue
-			}
-
 			// convert < and >
 			sanitizedText = html.UnescapeString(sanitizedText)
 			// we still escape the string, just in case
 			sanitizedText = template.HTMLEscapeString(sanitizedText)
+			if slices.Contains(statusMessages, sanitizedText) {
+				continue
+			}
 			statusMessages = append(statusMessages, sanitizedText)
 		}
 	}
