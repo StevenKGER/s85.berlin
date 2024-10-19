@@ -1,5 +1,6 @@
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{t "title"}}</title>
 </head>
 <body>
@@ -13,17 +14,32 @@
     body {
         display: flex;
         flex-direction: column;
-        justify-content: center;
         min-height: 100vh;
+        margin: 0;
     }
     h1 {
-        font-size: 6em;
+        font-size: min(13vw, 6em);
+        margin-bottom: 0;
+    }
+    h3 {
+        font-size: min(5vw, 1.5em);
+    }
+    #main {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    #bottom {
+        padding: 30px 0px;
     }
 </style>
+
+<div id="main">
 {{if eq .Status 0}} <!-- running -->
     {{if .DetailText}}
         <h1 class="text center">{{t "running_status_with_detail_message"}}</h1>
-        <br><br>
+        <br>
         <h3 class="text center">{{.DetailText}}</h3>
         {{if .OriginalDetailText}}
             <h5 class="text center">({{.OriginalDetailText}})</h5>
@@ -31,13 +47,13 @@
         <h3 class="text center">{{t "running_detail_with_detail_message"}}</h3>
     {{else}}
         <h1 class="text center">{{t "running_status"}}</h1>
-        <br><br>
+        <br>
         <h3 class="text center">{{t "running_detail"}}</h3>
     {{end}}
 {{end}}
 {{if eq .Status 1}} <!-- not running -->
     <h1 class="text center">{{t "not_running_status"}}</h1>
-    <br><br>
+    <br>
     <h3 class="text center">{{.DetailText}}</h3>
     {{if .OriginalDetailText}}
         <h5 class="text center">({{.OriginalDetailText}})</h5>
@@ -46,18 +62,20 @@
 {{end}}
 {{if eq .Status 2}} <!-- closing time -->
     <h1 class="text center">{{t "closing_time_status"}}</h1>
-    <br><br>
+    <br>
     <h3 class="text center">{{t "closing_time_detail"}}</h3>
 {{end}}
 {{if eq .Status 3}} <!-- no information -->
     <h1 class="text center">{{t "no_information_status"}}</h1>
-    <br><br>
+    <br>
     <h3 class="text center">{{t "no_information_detail"}}</h3>
 {{end}}
-<br><br><br><br><br>
-<div class="text center">
-    Last Update: {{.Time}}<br>
-    Made with ❤️ as <a href="https://github.com/StevenKGER/s85.berlin">Open Source Software</a> with data from <a href="https://transport.rest/">transport.rest</a>
 </div>
+
+<div id="bottom" class="text center">
+    Last Update: {{.Time}}<br>
+    Made with ❤️ as <a href="https://github.com/StevenKGER/s85.berlin">Open Source Software</a> with&nbsp;data&nbsp;from&nbsp;<a href="https://transport.rest/">transport.rest</a>
+</div>
+    
 </body>
 </html>
